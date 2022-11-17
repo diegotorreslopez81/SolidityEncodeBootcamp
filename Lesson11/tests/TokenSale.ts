@@ -126,7 +126,8 @@ describe("NFT Shop", async () => {
       // throw new Error("Not implemented");
     });
     it("give the right NFT", async () => {
-      const nftOwner = await 
+      const nftOwner = await nftContract.ownerOf(NFT_ID);
+      
 
       // throw new Error("Not implemented");
     });
