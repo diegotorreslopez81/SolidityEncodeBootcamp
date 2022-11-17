@@ -1,21 +1,53 @@
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
+import { parseEther } from "ethers/lib/utils";
 import { ethers } from "hardhat";
+import { TokenSale, TokenSale__factory } from "../typechain-types";
+import { token } from "../typechain-types/@openzeppelin/contracts";
+import { MyERC20__factory } from "../typechain-types/factories/contracts/MyERC20__factory";
+
+const TOKEN_ETH_RATIO = 1;
 
 describe("NFT Shop", async () => {
-  beforeEach(async () => {});
+  // deploy
+  let  accounts: SignerWithAddress[];
+  let tokenSaleContract: TokenSale;
+
+  beforeEach(async () => {
+    accounts = await ethers.getSigners();
+    const tokenSaleContractFactory = new TokenSale__factory(accounts[0]);
+    tokenSaleContract = await tokenSaleContractFactory.deploy(TOKEN_ETH_RATIO, ethers.constants.AddressZero);
+    await tokenSaleContract.deployed();
+  });
 
   describe("When the Shop contract is deployed", async () => {
     it("defines the ratio as provided in parameters", async () => {
-      throw new Error("Not implemented");
-    });
+      
+      const ratio = await tokenSaleContract.ratio();
+      expect(ratio).to.eq(TOKEN_ETH_RATIO);
+      // throw new Error("Not implemented");
+  });
 
     it("uses a valid ERC20 as payment token", async () => {
-      throw new Error("Not implemented");
+      const erc20TokenAddress = await tokenSaleContract.paymentToken();
+      const erc20TokenFactory = new MyERC20__factory(accounts[0]);
+      const erc20TokenContract = erc20TokenFactory.attach(erc20TokenAddress);
+      await expect (erc20TokenContract.totalSupply()).not.to.reverted;
+      await expect (erc20TokenContract.balanceOf(accounts[0].address)).not.to.reverted;
+      // throw new Error("Not implemented");
     });
   });
 
   describe("When a user purchase an ERC20 from the Token contract", async () => {
-    beforeEach(async () => {});
+    const ETH_SENT = parseEther("1");
+    beforeEach(async () => {
+      const tx = await tokenSaleContract.purchaseTokens({
+        value: ETH_SENT,         
+      });
+      await tx.wait();
+      const contractBalance = await ethers.provider.getBalance(tokenSaleContract.address);
+      console.log(contractBalance);
+    });
 
     it("charges the correct amount of ETH", async () => {
       throw new Error("Not implemented");
