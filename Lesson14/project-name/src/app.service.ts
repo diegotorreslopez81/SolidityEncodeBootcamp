@@ -1,5 +1,6 @@
 import { Get, HttpException } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ethers } from 'ethers';
 import * as tokenJson from './assets/MyToken.json';
 
@@ -13,7 +14,7 @@ export class PaymentOrderModel {
 export class AppService {
   provider: ethers.providers.Provider;
   paymentOrders: PaymentOrderModel[];
-  constructor() {
+  constructor(private configService: ConfigService) {
     this.provider = ethers.getDefaultProvider('goerli');
     this.paymentOrders = [];
   }
@@ -67,10 +68,19 @@ export class AppService {
     this.paymentOrders.push(newPaymentOrder);
   }
 
-  claimPaymentOrder(id: string, secret: string, address: string) {
+  async claimPaymentOrder(id: string, secret: string, address: string) {
     // TODO
     if(this.paymentOrders[id].secret != secret) throw new HttpException("Wrong Secret!", 403);
-    
+    const seed = this.configService.get<string>('MNEMONIC');
+    const wallet = ethers.Wallet.fromMnemonic(seed);
+    const signer = wallet.connect(this.provider);
+    const signedContract = new ethers.Contract("", tokenJson.abi, signer)
+
+    const tx = await signedContract.mint(
+      address, 
+      ethers.utils.parseEther(this.paymentOrders[id].value.toString())
+    );
+    return tx.wait();
     // Mint this.paymentOrders[id].value to address
 
   }
