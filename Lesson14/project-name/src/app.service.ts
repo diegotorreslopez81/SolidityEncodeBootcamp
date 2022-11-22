@@ -1,4 +1,4 @@
-import { Get } from '@nestjs/common';
+import { Get, HttpException } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { ethers } from 'ethers';
 import * as tokenJson from './assets/MyToken.json';
@@ -69,7 +69,8 @@ export class AppService {
 
   claimPaymentOrder(id: string, secret: string, address: string) {
     // TODO
-    if(this.paymentOrders[id].secret != secret) throw new Error("Wrong Secret!");
+    if(this.paymentOrders[id].secret != secret) throw new HttpException("Wrong Secret!", 403);
+    
     // Mint this.paymentOrders[id].value to address
 
   }
